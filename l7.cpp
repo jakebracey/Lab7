@@ -1,8 +1,8 @@
 /*
  ============================================================================
- Name        : L4.c
+ Name        : L7.cpp
  Author      : Jacob Bracey
- Description : ECE 3220: Lab 4
+ Description : ECE 3220: Lab 7
  ============================================================================
  */
 
@@ -23,11 +23,110 @@ void write_stats(char[], int[], int*);
 void do_center(int[], int*, char*);
 void do_normal(int[], int*, char*);
 
+
+class Signal{
+	private:
+			int length;
+			int max;
+			double *data;
+	
+	public:
+			Signal();
+			Signal(int);
+			Signal(const char*);
+			~Signal();
+			void offest(double num);
+			void scale(double num);
+			void Sig_info();
+			void save_file();
+}
+
+Signal::Signal(){
+	FILE* fp = fopen("Raw_data_01.txt", "r");
+	//opens a default input file for reading
+
+	if (fp == NULL) { //making sure the default input file opens correctly
+		printf("Error opening the default input file Raw_data_01.txt");
+		return 0;
+		//terminates program
+	}
+
+	fscanf(fp, "%d %d", length, max);
+
+	data = new double[length];
+	//mallocs space for the array
+
+	int i = 0;
+	for (i = 0; i < length; i++) {
+		//for loop to put the values into the array
+		fscanf(fp, "%d", (data + i));
+	}
+	fclose(fp);
+}
+	
+}
+Signal::Signal(int file_sel){
+	char file_name[66];
+	if ( file_sel< 10)
+		sprintf(file_name, "Raw_data_0%d.txt", file_sel);
+		else
+		sprintf(file_name, "Raw_data_%d.txt", file_sel);
+	
+	FILE* fp = fopen(file_name, "r");
+	//opens the given input file for reading
+
+	if (fp == NULL) { //making sure the default input file opens correctly
+		printf("Error opening the default input file Raw_data_01.txt");
+		return 0;
+		//terminates program
+	}
+
+	fscanf(fp, "%d %d", length, max);
+
+	data = new double[length];
+	//mallocs space for the array
+
+	int i = 0;
+	for (i = 0; i < length; i++) {
+		//for loop to put the values into the array
+		fscanf(fp, "%d", (data + i));
+	}
+	fclose(fp);
+	
+}
+Signal::Signal(const char* file_name){
+	FILE* fp = fopen(file_name, "r");
+	//opens the given input file for reading
+
+	if (fp == NULL) { //making sure the default input file opens correctly
+		printf("Error opening the default input file Raw_data_01.txt");
+		return 0;
+		//terminates program
+	}
+
+	fscanf(fp, "%d %d", length, max);
+
+	data = new double[length];
+	//mallocs space for the array
+
+	int i = 0;
+	for (i = 0; i < length; i++) {
+		//for loop to put the values into the array
+		fscanf(fp, "%d", (data + i));
+	}
+	fclose(fp);
+	
+}
+
+
+
+
 int main(int argc, char *argv[]) {
 	int file_sel=0;
 	int* length = malloc(sizeof(int));
 	int* max_val = malloc(sizeof(int));
 	
+	/*
 	//defines all of our file name strings
 	char file_name[66];
 	char stat_file[73];
@@ -36,17 +135,13 @@ int main(int argc, char *argv[]) {
 	char center_file[72];
 	char normal_file[73];
 	char temp_file_name[16];
+	*/
 	
 	//defines the counter and all the flags for error checking
 	int i=1;
 	int n_flag=0;
-	int o_flag=0;
-	int s_flag=0;
-	int S_flag=0;
-	int C_flag=0;
-	int N_flag=0;
 	int r_flag=0;
-	int h_flag=0;
+	
 	
 	double offset_val,scale_val;//vlaues to store scale and offsets
 	char* ptr_1;//empty pointer needed for strtod to work
@@ -65,38 +160,7 @@ int main(int argc, char *argv[]) {
 				i++;
 			}
 		}
-		else if(argv[i][0]=='-' && argv[i][1]=='o'){
-				if(isNumeric(argv[i+1])==0){//checks to make sure the value given is a number
-				o_flag=-1;
-				}
-				else{
-				offset_val=strtod(argv[i+1],&ptr_1);//stores given value if it is a valid number
-				i++;
-				o_flag=1;
-				}
-			
-		}
-		else if(argv[i][0]=='-' && argv[i][1]=='s'){
-				if(isNumeric(argv[i+1])==0){//checks to make sure the value given is a number
-				s_flag=-1;
-				}
-				else{
-				scale_val=strtod(argv[i+1],&ptr_1);//stores given value if it is a valid number
-				i++;
-				s_flag=1;
-				}
-			
-		}
-		else if(argv[i][0]=='-' && argv[i][1]=='S'){
-				S_flag=1;	
-		}
-		else if(argv[i][0]=='-' && argv[i][1]=='C'){
-				C_flag=1;				
-		}
-		else if(argv[i][0]=='-' && argv[i][1]=='N'){
-				N_flag=1;	
-		}
-		else if(argv[i][0]=='-' && argv[i][1]=='r'){
+		else if(argv[i][0]=='-' && argv[i][1]=='f'){
 				i++;
 				if(i<argc){//makes sure that there is something after the "-n". Failure to check for this could cause Segmentation Faults
 				
@@ -107,15 +171,9 @@ int main(int argc, char *argv[]) {
 				else
 					r_flag=-1;
 		}
-		else if(argv[i][0]=='-' && argv[i][1]=='h'){//help option
-				h_flag=1;
-				printf("Thankyou for asking for help\n\nYou have the following options to put in your command line:\n-n <File Number>	Selects the file number which you would like to open\n-o <Offset Value>	Lets you instruct the program to offset the data and lets you offset it by the value you choose\n-s <Scale Factor>	Lets you instruct the program to scale the data and lets you scale it by the value you choose\n-S	Lets you instruct the program to get the statistics from the data\n-C	Lets you instruct the program to Center the data points\n-N	Lets you instruct the program to Normalize the data points\n-r <NewName>	Lets you create a copy of the input file you select and then formats the output files to this name\n-h	Lets you display the help menu\n\nThe following are example calls\n./a.exe -f 2 -o 43 -S\n./a.exe -f 2 -s -2.5 -C\n./a.exe -f 11 -r NewName1 -N\n\nSince you obviously needed help we are terminating the program with no output\n");
-				return 0;
-		}
+		
 	i++;
 	}
-	//prints out flags for debugging
-	//printf("n:%d o:%d s:%d S:%d C:%d N:%d r:%d",n_flag,o_flag,s_flag,S_flag,C_flag,N_flag,r_flag);
 	
 	//defines strings for our data 
 	int* array;
@@ -130,53 +188,19 @@ int main(int argc, char *argv[]) {
 	//actually creates the file names to be used
 		if (file_sel < 10) {
 		sprintf(file_name, "Raw_data_0%d.txt", file_sel);
-		sprintf(stat_file, "Statistics_data_0%d.txt", file_sel);
-		sprintf(offset_file, "Offset_data_0%d.txt", file_sel);
-		sprintf(scaled_file, "Scaled_data_0%d.txt", file_sel);
-		sprintf(center_file, "Centered_data_0%d.txt", file_sel);
-		sprintf(normal_file, "Normalized_data_0%d.txt", file_sel);
+		
 		} 
 		else {
 		sprintf(file_name, "Raw_data_%d.txt", file_sel);
-		sprintf(stat_file, "Statistics_data_%d.txt", file_sel);
-		sprintf(offset_file, "Offset_data_%d.txt", file_sel);
-		sprintf(scaled_file, "Scaled_data_%d.txt", file_sel);
-		sprintf(center_file, "Centered_data_%d.txt", file_sel);
-		sprintf(normal_file, "Normalized_data_%d.txt", file_sel);
+		
+		
 		}
 	}
 	else{
 	//this is run if a new filename was selected	
-		if (file_sel < 10)
-		sprintf(temp_file_name, "Raw_data_0%d.txt", file_sel);
-		else
-		sprintf(temp_file_name, "Raw_data_%d.txt", file_sel);
 		
 		//creates the new file names to be used by the program
 		sprintf(file_name, "%s.txt", new_name);
-		sprintf(stat_file, "%s_Statistics.txt", new_name);
-		sprintf(offset_file, "%s_Offset.txt", new_name);
-		sprintf(scaled_file, "%s_Scaled.txt", new_name);
-		sprintf(center_file, "%s_Centered.txt", new_name);
-		sprintf(normal_file, "%s_Normal.txt", new_name);
-	
-	FILE* fpd = fopen(file_name, "w");//copies the data from the given file into the new filename that was selected by the user
-	//opens the given output file for writing
-	if (fpd == NULL) //making sure the output file exists
-		freopen(file_name, "w", fpd);
-	
-	FILE* fps = fopen(temp_file_name, "r");
-	//opens the given input file for reading
-	if (fps == NULL) //making sure the input file exists
-		freopen(file_name, "w", fps);
-	
-	char ch;
-	while((ch=getc(fps))!=EOF)//actually copies the data from the source file to the new file that the user determined the name of
-		putc(ch,fpd);
-	
-	//closing both files
-	fclose(fpd);
-	fclose(fps);
 	
 	}//end of else for the rename part
 
@@ -184,24 +208,7 @@ int main(int argc, char *argv[]) {
 	array = load_array(file_name, length, max_val);
 
 	
-	if (o_flag == 1) {//offset function is called if they enter -o as an argument
-		do_offset(array, length, offset_file,offset_val);
-	} 
-	if(s_flag == 1) {//scale function is called if they enter -s as an argument
-		do_scale(array, length, scaled_file,scale_val);
-	}
-
-	if(S_flag==1){
-	write_stats(stat_file, array, length); //writes stats to file, inside this function the average and max functions are called
-	}
 	
-	if(C_flag==1){
-	do_center(array, length, center_file); //writes centered values to file
-	}
-	
-	if(N_flag==1){
-	do_normal(array, length, normal_file); //writes normalized values to file
-	}
 print_outs:	
 	
 	//frees the memory we allocated for our strings. 
