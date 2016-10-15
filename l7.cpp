@@ -13,6 +13,8 @@
 #include <conio.h>
 #include <string.h>
 
+using namespace std;
+
 int isNumeric (const char * s);
 int *load_array(char* file, int* length, int* max_val);
 void do_offset(int* array, int* length, char*file, double val);
@@ -27,9 +29,9 @@ void do_normal(int[], int*, char*);
 class Signal{
 	private:
 			int length;
-			int max;
+			double max;
 			double *data;
-	
+			double mean;
 	public:
 			Signal();
 			Signal(int);
@@ -37,8 +39,16 @@ class Signal{
 			~Signal();
 			void offest(double num);
 			void scale(double num);
+			void center();
+			void normal();
+			void stats();
 			void Sig_info();
-			void save_file();
+			void Save_file(const char*);
+}
+
+Signal::~Signal(){
+	delete[] data;
+	cout << "Signal Destructed" << endl;
 }
 
 Signal::Signal(){
@@ -63,8 +73,7 @@ Signal::Signal(){
 	}
 	fclose(fp);
 }
-	
-}
+
 Signal::Signal(int file_sel){
 	char file_name[66];
 	if ( file_sel< 10)
@@ -92,8 +101,8 @@ Signal::Signal(int file_sel){
 		fscanf(fp, "%d", (data + i));
 	}
 	fclose(fp);
-	
 }
+
 Signal::Signal(const char* file_name){
 	FILE* fp = fopen(file_name, "r");
 	//opens the given input file for reading
@@ -115,10 +124,81 @@ Signal::Signal(const char* file_name){
 		fscanf(fp, "%d", (data + i));
 	}
 	fclose(fp);
-	
 }
 
+Signal::offset(double num){
+	int i=0;
+	for(i=0; i<length; i++){ //adds the offset value to all data values
+		*(data+i)+=num;
+	}
+	stats(); //Updates stats after operation
+	return 0;
+}
 
+Signal::scale(double num){
+	int i=0;
+	for(i=0; i<length; i++){ //multiplies the scaling factor to all data values
+		*(data+i)=*(data+i)*num;
+	}
+	stats(); //updates stats after operation
+	return 0;
+}
+
+Signal::stats(){ //updates mean and max
+	int i=0;
+	double add=0;
+	max=0;
+	for (i = 0; i<length; i++){
+		if (*(data+i) > max)
+		max = *(data+i);
+	}
+	for (i = 0; i < length; i++){
+		add += *(data+i);
+	}
+	mean = (double)add/length;
+	return 0;
+}
+
+Signal::center(){
+	int i=0;
+	for(i=0; i<length; i++){ //subtracts mean from all data values
+		*(data+i)=*(data+i)-mean;
+	}
+	stats(); //Updates stats after operation
+	return 0;
+}
+
+Signal::normal(){
+	int i=0;
+	for(i=0; i<length; i++){ //devides by max for all data values
+		*(data+i)=*(data+i)/max;
+	}
+	stats(); //updates stats after operation
+	return 0;
+}
+
+Signal::Sig_info(){
+	cout << "\nLength: " << length << endl << "\nMax: " << max << endl << "Average" << mean << endl; //prints out signal info
+	return 0;
+}
+
+Signal::Save_file(const char* file_name){
+	FILE* fp = fopen(file_name, "w");
+	//opens the given output file for write
+
+	if (fp == NULL) //making sure the output file exists and creates a new one if it doesn't
+	{
+		freopen(file, "w", fp);
+	}
+
+	fprintf(fp, "%d %d", length, max);
+	for(i = 0; i<length; i++) //prints new array values to file
+	{
+		fprintf(fp, "%.4f\n", *(data+i));
+	}
+	fclose(fp); //closes file
+	return 0;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -230,110 +310,6 @@ print_outs:
 
 } //end of main
 
-
-
-void do_offset(int* array, int* length, char* file,double val) {
-	//function to offset all of the data points
-	double* array_changed = malloc(sizeof(double) * *length);//mallocs a string to put our altered values in
-	int i;
-	for (i = 0; i < *length; i++) {//goes through every term in the array
-		*(array_changed + i) = (double) (*(array + i) + val);//adds the value to every term
-	}
-
-	//this part of the function writes the output to the given output file
-	FILE* fp = fopen(file, "w");
-	//opens the given input file for reading
-
-	if (fp == NULL) //making sure the input file exists
-	{
-		freopen(file, "w", fp);
-	}
-	fprintf(fp, "%d %.4lf\n", *length, val);
-	for (i = 0; i < *length; i++) {
-		fprintf(fp, "%.4lf\n", *(array_changed + i));
-	}
-	fclose(fp);
-	return;
-}
-
- void do_scale(int* array, int* length, char* file,double val) {
-	//funciton to scale all of the input data points
-	double* array_changed = malloc(sizeof(double) * *length);//mallocs a string to put our altered values in
-	int i;
-	for (i = 0; i < *length; i++) {
-		*(array_changed + i) = (double) (*(array + i) * val);
-	}
-
-	//this part of the function writes the output to the given output file
-	FILE* fp = fopen(file, "w");
-	//opens the given input file for write
-
-	if (fp == NULL) //making sure the input file exists
-	{
-		freopen(file, "w", fp);
-	}
-	fprintf(fp, "%d %.4lf\n", *length, val);
-	for (i = 0; i < *length; i++) {
-		fprintf(fp, "%.4lf\n", *(array_changed + i));
-	}
-	fclose(fp);
-	
-	return;
-}
-
-void do_center(int array[], int* length, char* file)
-//function to center all of the data points and then output those points to an output file
-{
-	int i;
-	double val, mean;
-	double* array_changed = malloc(sizeof(double)* *length); //mallocs space for array
-	mean= getmean(array, length); //gets average value for array
-	for(i=0; i<*length; i++) //shifts values in array to make mean zero, applying changes to seperate array
-	{
-		*(array_changed + i)=(double)(*(array+i) - mean);
-	}
-
-	FILE* fp = fopen(file, "w"); //opens file for write
-	if (fp==NULL) //creates new file if one doesn't exist yet
-	{
-		freopen(file, "w", fp);
-	}
-	fprintf(fp, "%d %.4f\n", *length, mean);
-	for(i = 0; i<*length; i++) //prints new array values to file
-	{
-		fprintf(fp, "%.4f\n", *(array_changed+i));
-	}
-	free(array_changed); //frees memory
-	fclose(fp); //closes file
-	return;
-}
-
-void do_normal(int array[], int* length, char* file){
-	//funciton to normalize the array and then put those values in an output file
-	int i, max;
-	double val;
-	double* array_changed = malloc(sizeof(double)* *length); //mallocs space for array
-	max= getmax(array, length); //gets max value for array
-	for(i=0; i<*length; i++) //scales values in array to make max 1, applying changes to seperate array
-	{
-		*(array_changed + i)=(double)(*(array+i) / (double)max);
-	}
-
-	FILE* fp = fopen(file, "w"); //opens file for write
-	if (fp==NULL) //creates new file if one doesn't exist yet
-	{
-		freopen(file, "w", fp);
-	}
-	fprintf(fp, "%d %.4f\n", *length, (double)(1/(double)max));
-	for(i = 0; i<*length; i++) //prints new array values to file
-	{
-		fprintf(fp, "%.4f\n", *(array_changed+i));
-	}
-	free(array_changed); //frees memory
-	fclose(fp); //closes file
-	return;
-}
-
 int *load_array(char* file, int* length, int* max_val) {
 	//function to load the data from the input file in the array
 	FILE* fp = fopen(file, "r");
@@ -359,45 +335,7 @@ int *load_array(char* file, int* length, int* max_val) {
 	return array;
 }
 
-double getmean(int array[], int *length) {
-	//function to find the average of all the data points in the input file
-	int i = 0;
-	int add = 0;
-	double mean = 0;
-	for (i = 0; i < *length; i++) //adds the values in array
-			{
-		add += array[i];
-	}
-	mean = (double) add / *length; //devides by # of values added
-	return mean; //returns average
-}
 
-int getmax(int array[], int *length) {
-	//funciton to find the maximum value in the data set
-	int i = 0;
-	int max = 0;
-	for (i = 0; i < *length; i++) //finds max value in array
-			{
-		if (array[i] > max)
-			max = array[i];
-	}
-	return max;
-}
-
-void write_stats(char* file, int array[], int* length) {
-	//function to write the average and maximum value in a output file
-	FILE* fp = fopen(file, "w");
-	//opens the given input file for reading
-
-	if (fp == NULL) //making sure the input file exists
-	{
-		freopen(file, "w", fp);
-	}
-	//calls the mean and max function all in the fprintf function
-	fprintf(fp, "%.02f %d", getmean(array, length), getmax(array, length)); //writes to file
-	fclose(fp);
-	return;
-}
 int isNumeric (const char * s)//determines if a given string is a numeric value or not, returns 0 if it is not and non-0 value if it is a numeric value.
 {
     if (s == NULL || *s == '\0' || isspace(*s))
