@@ -17,6 +17,10 @@ using namespace std;
 
 int isNumeric (const char * s);
 int *load_array(char* file, int* length, int* max_val);
+
+/*
+These are the functions that were used before converting this code to C++
+
 void do_offset(int* array, int* length, char*file, double val);
 void do_scale(int* array, int* length, char*file,double val);
 double getmean(int[], int*);
@@ -24,7 +28,7 @@ int getmax(int[], int*);
 void write_stats(char[], int[], int*);
 void do_center(int[], int*, char*);
 void do_normal(int[], int*, char*);
-
+*/
 
 class Signal{
 	private:
@@ -32,10 +36,15 @@ class Signal{
 			double max;
 			double *data;
 			double mean;
+			
+			
 	public:
 			Signal();
 			Signal(int);
 			Signal(const char*);
+			Signal builder();
+			Signal builder(int file_sel);
+			Signal builder(const char* file_name);
 			~Signal();
 			void offest(double num);
 			void scale(double num);
@@ -44,6 +53,85 @@ class Signal{
 			void stats();
 			void Sig_info();
 			void Save_file(const char*);
+}
+
+Signal Signal::builder(){
+	FILE* fp = fopen("Raw_data_01.txt", "r");
+	//opens a default input file for reading
+
+	if (fp == NULL) { //making sure the default input file opens correctly
+		printf("Error opening the default input file Raw_data_01.txt");
+		return 0;
+		//terminates program
+	}
+
+	fscanf(fp, "%d %d", length, max);
+
+	data = new double[length];
+	//mallocs space for the array
+
+	int i = 0;
+	for (i = 0; i < length; i++) {
+		//for loop to put the values into the array
+		fscanf(fp, "%d", (data + i));
+	}
+	fclose(fp);
+	return *this;
+}
+
+Signal Signal::builder(int file_sel){
+	char file_name[66];
+	if ( file_sel< 10)
+		sprintf(file_name, "Raw_data_0%d.txt", file_sel);
+		else
+		sprintf(file_name, "Raw_data_%d.txt", file_sel);
+	
+	FILE* fp = fopen(file_name, "r");
+	//opens the given input file for reading
+
+	if (fp == NULL) { //making sure the default input file opens correctly
+		printf("Error opening the default input file Raw_data_01.txt");
+		return 0;
+		//terminates program
+	}
+
+	fscanf(fp, "%d %d", length, max);
+
+	data = new double[length];
+	//mallocs space for the array
+
+	int i = 0;
+	for (i = 0; i < length; i++) {
+		//for loop to put the values into the array
+		fscanf(fp, "%d", (data + i));
+	}
+	fclose(fp);
+	return *this;
+}
+
+Signal Signal::builder(const char* file_name){
+	FILE* fp = fopen(file_name, "r");
+	//opens the given input file for reading
+
+	if (fp == NULL) { //making sure the default input file opens correctly
+		printf("Error opening the default input file Raw_data_01.txt");
+		return 0;
+		//terminates program
+	}
+
+	fscanf(fp, "%d %d", length, max);
+
+	data = new double[length];
+	//mallocs space for the array
+
+	int i = 0;
+	for (i = 0; i < length; i++) {
+		//for loop to put the values into the array
+		fscanf(fp, "%d", (data + i));
+	}
+	fclose(fp);
+	return *this;
+
 }
 
 Signal::~Signal(){
@@ -126,25 +214,23 @@ Signal::Signal(const char* file_name){
 	fclose(fp);
 }
 
-Signal::offset(double num){
+void Signal::offset(double num){
 	int i=0;
 	for(i=0; i<length; i++){ //adds the offset value to all data values
 		*(data+i)+=num;
 	}
 	stats(); //Updates stats after operation
-	return 0;
 }
 
-Signal::scale(double num){
+void Signal::scale(double num){
 	int i=0;
 	for(i=0; i<length; i++){ //multiplies the scaling factor to all data values
 		*(data+i)=*(data+i)*num;
 	}
 	stats(); //updates stats after operation
-	return 0;
 }
 
-Signal::stats(){ //updates mean and max
+void Signal::stats(){ //updates mean and max
 	int i=0;
 	double add=0;
 	max=0;
@@ -156,33 +242,29 @@ Signal::stats(){ //updates mean and max
 		add += *(data+i);
 	}
 	mean = (double)add/length;
-	return 0;
 }
 
-Signal::center(){
+void Signal::center(){
 	int i=0;
 	for(i=0; i<length; i++){ //subtracts mean from all data values
 		*(data+i)=*(data+i)-mean;
 	}
 	stats(); //Updates stats after operation
-	return 0;
 }
 
-Signal::normal(){
+void Signal::normal(){
 	int i=0;
 	for(i=0; i<length; i++){ //devides by max for all data values
 		*(data+i)=*(data+i)/max;
 	}
 	stats(); //updates stats after operation
-	return 0;
 }
 
-Signal::Sig_info(){
+void Signal::Sig_info(){
 	cout << "\nLength: " << length << endl << "\nMax: " << max << endl << "Average" << mean << endl; //prints out signal info
-	return 0;
 }
 
-Signal::Save_file(const char* file_name){
+void Signal::Save_file(const char* file_name){
 	FILE* fp = fopen(file_name, "w");
 	//opens the given output file for write
 
@@ -197,18 +279,23 @@ Signal::Save_file(const char* file_name){
 		fprintf(fp, "%.4f\n", *(data+i));
 	}
 	fclose(fp); //closes file
-	return 0;
 }
 
 
 int main(int argc, char *argv[]) {
+	
+	
 	int file_sel=0;
-	int* length = malloc(sizeof(int));
-	int* max_val = malloc(sizeof(int));
 	
 	/*
+	int* length = malloc(sizeof(int));
+	int* max_val = malloc(sizeof(int));
+	*/
+	
 	//defines all of our file name strings
 	char file_name[66];
+	
+	/*
 	char stat_file[73];
 	char offset_file[69];
 	char scaled_file[69];
@@ -222,39 +309,77 @@ int main(int argc, char *argv[]) {
 	int n_flag=0;
 	int r_flag=0;
 	
+	Signal sig1;
 	
 	double offset_val,scale_val;//vlaues to store scale and offsets
 	char* ptr_1;//empty pointer needed for strtod to work
 	char* new_name;//pointer to hold the new file name from user if needed.
 	
-	//while loop that goes through all the command line arguments
-	while(i<argc){
-		if(argv[i][0]=='-' && argv[i][1]=='n'){
-			if(isNumeric(argv[i+1])==0){//checks to make sure the value given is a number
+	
+if (argc==3){
+	
+		if(argv[1][0]=='-' && argv[1][1]=='n'){
+			if(isNumeric(argv[2])==0){//checks to make sure the value given is a number
 				n_flag=-1;
 				goto print_outs;//if the user doesn't give a file number no action can be taken so we go to help screen and print out message
 			}
 			else{
-				file_sel=atoi(argv[i+1]);//happens if user gives a valid input
+				file_sel=atoi(argv[2]);//happens if user gives a valid input
 				n_flag=1;
 				i++;
 			}
 		}
-		else if(argv[i][0]=='-' && argv[i][1]=='f'){
+		else if(argv[1][0]=='-' && argv[1][1]=='f'){
 				i++;
-				if(i<argc){//makes sure that there is something after the "-n". Failure to check for this could cause Segmentation Faults
+				if(1<argc){//makes sure that there is something after the "-n". Failure to check for this could cause Segmentation Faults
 				
-				new_name=malloc(sizeof(argv[i]+4));//if all conditions are satisfied, the program mallocs memory and stores the given text
+				char new_name[66];
 				sprintf(new_name,"%s",argv[i]);
 				r_flag=1;
 				}
 				else
 					r_flag=-1;
 		}
-		
-	i++;
+		else	
+			
+	
+	}
+}
+
+else{
+	int choice=0;
+	int choice_input_type=0;
+	
+	cout<<endl<<"Would you like to\n(1) Enter a filename\n(2) Enter a file number\n(3) Select the default case"<<endl;
+	cin>>choice_input_type;
+	if(choice_input_type==1){
+		cout<<endl<<"Please enter a valid filename\n";
+		cin>>file_name;
+		sig1.builder(file_name);
+	}
+	else if(choice_input_type==2){
+		cout<<endl<<"Please enter a valid file number\n";
+		cin>>file_sel;
+		sig1.builder(file_sel);
+	}
+	else{
+		sig1.builder();
 	}
 	
+	
+	switch(choice){
+		
+	while(choice!=8){
+		cout << endl << "Please select an option"<<endl<<"(1):offset signal\n(2):scale signal\n(3):center signal\n(4):normalize signal\n(5):Display Statistics\n(6):Print Signal\n(7):Save Signal\n(8):Exit\n";
+		
+		
+	}
+	
+	
+	}//end of switch statement
+	
+}
+
 	//defines strings for our data 
 	int* array;
 	double* array_changed;
