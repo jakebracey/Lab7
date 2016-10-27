@@ -71,6 +71,7 @@ Signal& Signal::builder(){
 	}
 	fclose(fp);
 	}
+	stats();
 	return *this;
 }
 
@@ -106,6 +107,7 @@ Signal& Signal::builder(int file_sel){
 	}
 	fclose(fp);
 	}
+	stats();
 	return *this;
 }
 
@@ -218,7 +220,7 @@ void Signal::normal(){
 
 void Signal::Sig_info(){
 	stats();
-	cout << "\nLength: " << length << endl << "\nMax: " << max << endl << "Average: " << mean << endl; //prints out signal info
+	cout << "Length: " << length << endl << "Max: " << max << endl << "Average: " << mean << endl<<endl; //prints out signal info
 }
 
 void Signal::Print_signal(){
